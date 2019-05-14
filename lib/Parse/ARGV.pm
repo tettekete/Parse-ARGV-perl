@@ -274,7 +274,7 @@ Parse::ARGV - The great new Parse::ARGV!
 
 =head1 VERSION
 
-Version 0.01
+Version 0.0001
 
 =cut
 
@@ -283,86 +283,78 @@ Version 0.01
 
 Quick summary of what the module does.
 
-Perhaps a little code snippet.
+Provides @ARGV parser for perl scripts acting as CLI tool.
 
     use Parse::ARGV;
 
     my $argv = Parse::ARGV->new(
-    'verbose'    =>
-    {
-        alias   => 'v'
-        default => undef,
-        isa     => sub{},    # Like Moo has => isa
-    1                    # `--dry-run` が与えられたとき `$OPT{'dry-run'}` に 1 が代入される。
-    ,'name'            =>
-    {
-        default    => undef,
-        isa        => sub{ shift @ARGV }    # `--name` の時､ `shift @ARGV` した値が `$OPT{name}` に代入される。厳密には `return shift @ARGV`
-    }
-)
+        'version'    => {}, # handle as bool by default.
+        'verbose'    =>
+        {
+            alias    => 'V'
+        },
+        ,'name'      =>
+        {
+            handle    => 'shift',
+        },
+        'email'    => sub
+        {
+            my ( $self ,$context_argv ) = @_;
 
-=head1 EXPORT
+            my $value = shift @$context_argv;
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+            return quotemeta $value;
+        }
+    )
 
-=head1 SUBROUTINES/METHODS
+=head1 Motivation
 
-=head2 function1
+vs `Getopt::Long` :
 
-=cut
+- 受け付けるオプションの定義的宣言
+    - 必要な場面で `GetOptions` するコードになると、結局の所どんな引数に対応しているのか？参照箇所は？となってしまう
+- オプションの数だけ変数を用意する必要が無い
+    - インスタンスを一つ格納できれば良い
+- 独自 DSL を極力排除
+    - `GetOptions('verbose!' => \$verbose)` これを初見でデフォルト値が FALSE のフラグ型、と分かるだろうか。入力値の NOT が入ると読めてしまうのでは無いか
 
-sub function1 {
-}
+=head1 TODO
 
-=head2 function2
+- CGI->param 的なオリジナルのオプション名を使ったアクセサの実装
+- 同一オプションの複数入力を配列に格納する
+- Moo の `isa` ライクなバリデータ向けコールバックの実装
+- shared_instance 実装 << 必要性があれば
 
-=cut
+=head1 METHODS
 
-sub function2 {
-}
+=head2 Public
+
+=head3 new([\@ARGV ,] \%config )
+
+
+=head3 single_argv( [$idx] )
+
+=head2 Accessor (auto grown)
+
+パースされたオプション名は、以下の変換を行った名前を使って取得することが出来ます。
+
+    $name =~ s/-/_/g;
+    $name =~ s/^\d+//g;
+    $name =~ s/\W//g;
+
+要は変数として使えるように変換した名前です。
+
+例:
+
+    --foo-bar → $argv->foo_bar
+    -V        → $argv->V
+
 
 =head1 AUTHOR
 
 H.Seo, C<< <tettekete at example.com> >>
 
 =head1 BUGS
-
-Please report any bugs or feature requests to C<bug-parse-argv at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Parse-ARGV>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc Parse::ARGV
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker (report bugs here)
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Parse-ARGV>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Parse-ARGV>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Parse-ARGV>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/Parse-ARGV/>
-
-=back
 
 
 =head1 ACKNOWLEDGEMENTS
